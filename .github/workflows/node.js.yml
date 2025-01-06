@@ -1,0 +1,46 @@
+name: Node.js CI
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: self-hosted
+
+    strategy:
+      matrix:
+        node-version: [22.x]
+        # Ensure compatibility with Node.js 22.x version.
+
+    steps:
+      # Step 1: Check out the repository
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Node.js
+      - name: Set Up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      # Step 3: Install dependencies
+      - name: Install Dependencies
+        run: npm ci
+
+      # Step 4: Check for and add the 'build' script if missing
+      - name: Ensure Build Script Exists
+        run: |
+          if ! grep -q '"build":' package.json; then
+            echo "No build script found. Adding a default build script."
+            npm set-script build "echo 'Default build script running...'"
+          fi
+
+      # Step 5: Run the build script
+      - name: Run Build
+        run: npm run build
+
+      # Step 6: Run tests (optional, add this if tests are part of your workflow)
+      - name: Run Tests
+        run: npm test
